@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="c3p0-0.9.1-pre6.jar"/>
+	<classpathentry kind="lib" path="mysql-connector-java-5.1.41-bin.jar"/>
+	<classpathentry kind="lib" path="json-lib-2.4-jdk15.jar"/>
+	<classpathentry kind="lib" path="commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="ezmorph-1.0.6.jar"/>
+	<classpathentry kind="lib" path="commons-collections-3.2.2.jar"/>
+	<classpathentry kind="lib" path="commons-beanutils-1.9.3.jar"/>
+	<classpathentry kind="lib" path="mail.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre1.8.0_101"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

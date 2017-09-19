@@ -1,0 +1,89 @@
+package com.myQQ_server.server.db;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class UserService {
+	/**
+	 * 使用email账户进行登陆
+	 * @param email
+	 * @param password
+	 * @return
+	 * @throws UsernameNotFoundException    用户不存在
+	 * @throws PasswordException            密码错误
+	 * @throws StateException               账户被锁定
+	 * @throws SQLException                 数据库连接失败
+	 * Connection对象--内建函数--prepareStatement(数据库命令)--PreparedStatement对象--内建函数--executeQuery()--ResultSet对象
+	 */
+	public String loginForEmail(String email, String password)
+			throws UsernameNotFoundException, PasswordException, StateException, SQLException {
+		return login(email, password, "SELECT * FROM users WHERE email=?");
+	}
+	
+	private String login(String key, String password, String sql)
+			throws UsernameNotFoundException, PasswordException, StateException, SQLException {
+		Connection conn = null;
+		try {
+			conn = DBManager.getConnection();
+			PreparedStatement pst = conn.prepareStatement(sql);
+			pst.setString(1, key);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				if (rs.getInt("state") == 0) {
+					if (rs.getString("password").equals(password)) {//询问密码是否相同
+						return rs.getString(1);
+					} else {
+						throw new PasswordException();
+					}
+				} else {
+					throw new StateException();
+				}
+				
+			} else {
+				throw new UsernameNotFoundException();
+			}
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			conn.close();
+		}
+		
+	}
+	
+	/**
+	 * 使用email账户进行登陆
+	 * @param phone
+	 * @param password
+	 * @return
+	 * @throws UsernameNotFoundException    用户不存在
+	 * @throws PasswordException            密码错误
+	 * @throws StateException               账户被锁定
+	 * @throws SQLException                 数据库连接失败
+	 */
+	public String loginForPhone(String phone, String password)
+			throws UsernameNotFoundException, PasswordException, StateException, SQLException {
+		return login(phone, password, "SELECT * FROM users WHERE phonenumber=?");
+	}
+	
+	public static void main(String[] args) {
+		try {
+			new UserService().loginForPhone("18913973607", "95271084");
+			System.out.println("success!");
+		} catch (UsernameNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (PasswordException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (StateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}

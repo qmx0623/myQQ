@@ -1,0 +1,193 @@
+package com.myQQ_server.server.db;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Vector;
+
+public class UserService {
+	/**
+	 * 使用email账户进行登陆
+	 * @param email
+	 * @param password
+	 * @return
+	 * @throws UsernameNotFoundException    用户不存在
+	 * @throws PasswordException            密码错误
+	 * @throws StateException               账户被锁定
+	 * @throws SQLException                 数据库连接失败
+	 * Connection对象--内建函数--prepareStatement(数据库命令)--PreparedStatement对象--内建函数--executeQuery()--ResultSet对象
+	 */
+	public String loginForEmail(String email, String password)
+			throws UsernameNotFoundException, PasswordException, StateException, SQLException {
+		return login(email, password, "SELECT * FROM users WHERE email=?");
+	}
+	
+	private String login(String key, String password, String sql)
+			throws UsernameNotFoundException, PasswordException, StateException, SQLException {
+		Connection conn = null;
+		try {
+			conn = DBManager.getConnection();
+			PreparedStatement pst = conn.prepareStatement(sql);
+			pst.setString(1, key);  //?设置为key
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				if (rs.getInt("state") == 0) {//账户状态是否异常
+					if (rs.getString("password").equals(password)) {//询问密码是否相同
+						return rs.getString(1);//返回select语句返回的第一个String，这里等同于getString("uid")
+					} else {
+						throw new PasswordException();
+					}
+				} else {
+					throw new StateException();
+				}
+				
+			} else {
+				throw new UsernameNotFoundException();
+			}
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			conn.close();
+		}
+		
+	}
+	
+	/**
+	 * 使用email账户进行登陆
+	 * @param phone
+	 * @param password
+	 * @return
+	 * @throws UsernameNotFoundException    用户不存在
+	 * @throws PasswordException            密码错误
+	 * @throws StateException               账户被锁定
+	 * @throws SQLException                 数据库连接失败
+	 */
+	public String loginForPhone(String phone, String password)
+			throws UsernameNotFoundException, PasswordException, StateException, SQLException {
+		return login(phone, password, "SELECT * FROM users WHERE phonenumber=?");
+	}
+	
+	/**
+	 * 获得自己的好友列表信息
+	 * @param uid   自己的编号
+	 * @return      好友的列表信息
+	 */
+	public Vector<UserInfo> getFriendsList(String uid) throws SQLException {
+		Connection conn = null;
+		try {
+			conn = DBManager.getConnection();
+			PreparedStatement pst = conn.prepareStatement(
+					"SELECT u.`img`,u.`uid`,u.`netname`,u.`info` FROM fiends f" 
+			        + " INNER JOIN users u ON u.`uid`=f.`hyuid` AND f.`uid`=?");
+			pst.setString(1, uid);
+			ResultSet rs = pst.executeQuery();
+			Vector<UserInfo> vector = new Vector<UserInfo>();
+			while (rs.next()) {
+				UserInfo userInfo = new UserInfo();
+				userInfo.setImg(rs.getString(1));
+				userInfo.setUid(rs.getString(2));
+				userInfo.setNetname(rs.getString(3));
+				userInfo.setInfo(rs.getString(4));
+				vector.add(userInfo);
+			}
+			return vector;
+			
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			conn.close();
+		}
+	}
+	
+	/**
+	 * 个人资料查询
+	 * 好友资料查询
+	 * @param uid
+	 * @return 返回信息
+	 * @throws SQLException
+	 */
+	public UserInfo2 getUserInfo(String uid) throws SQLException {
+		Connection conn = null;
+		try {
+			conn = DBManager.getConnection();
+			PreparedStatement pst = conn.prepareStatement(
+					"SELECT * FROM USERS WHERE UID=?");
+			pst.setString(1, uid);
+			ResultSet rs = pst.executeQuery();
+			UserInfo2 userInfo2 = new UserInfo2();
+			if (rs.next()) {
+				userInfo2.setUid(rs.getString("uid"));
+				userInfo2.setPhonenumber(rs.getString("phonenumber"));
+				userInfo2.setNetname(rs.getString("netname"));
+				userInfo2.setInfo(rs.getString("info"));
+				userInfo2.setName(rs.getString("name"));
+				userInfo2.setImg(rs.getString("img"));
+				userInfo2.setBack(rs.getString("back"));
+				userInfo2.setSex(rs.getString("sex"));
+				userInfo2.setYy(rs.getInt("yy"));
+				userInfo2.setMm(rs.getInt("mm"));
+				userInfo2.setDd(rs.getInt("dd"));
+			}
+			return userInfo2;
+			
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			conn.close();
+		}
+	}
+	
+	public void regUser(String username, String password) throws UsernameException, SQLException {
+		Connection conn = null;
+		try {
+			conn = DBManager.getConnection();
+			PreparedStatement pst = conn.prepareStatement(
+					"SELECT * FROM USERS WHERE phonenumber=? or email=?");
+			pst.setString(1, username);
+			pst.setString(2, username);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				throw new UsernameException();
+			}
+			
+			if(username.indexOf("@") >= 0) {
+				pst = conn.prepareStatement("INSERT INTO users(uid,email,PASSWORD,createtime) VALUES(?,?,?,SYSDATE())");//这里sql语句语法Eclipse出错无法
+			} else if (username.trim().length() == 11) {
+				pst = conn.prepareStatement("INSERT INTO users(uid,phonenumber,PASSWORD,createtime) VALUES(?,?,?,SYSDATE())");
+			}
+			
+			pst.setString(1, System.currentTimeMillis()+"R"+(int)(Math.random()*10000));
+			pst.setString(2, username);
+			pst.setString(3, password);
+			if (pst.executeUpdate() <= 0) {//小于0插入失败
+				throw new SQLException();
+			}
+			
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			conn.close();
+		}
+	}
+	
+	public static void main(String[] args) {
+		try {
+			new UserService().loginForPhone("18913973607", "95271084");
+			System.out.println("success!");
+		} catch (UsernameNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (PasswordException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (StateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}
